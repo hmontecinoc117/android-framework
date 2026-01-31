@@ -1,0 +1,51 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=5
+
+[application]
+
+config/name="Kids Educational Games"
+config/version="1.0.0"
+run/main_scene="res://scenes/main/GameSelector.tscn"
+config/features=PackedStringArray("4.5")
+
+[autoload]
+
+GameManager="*res://scripts/autoload/GameManager.gd"
+AudioManager="*res://scripts/autoload/AudioManager.gd"
+SaveManager="*res://scripts/autoload/SaveManager.gd"
+ThemeManager="*res://scripts/autoload/ThemeManager.gd"
+VoiceInstructions="*res://scripts/autoload/VoiceInstructions.gd"
+UiGlobals="*res://ui/autoload/ui_globals.gd"
+UiBootstrap="*res://ui/autoload/ui_bootstrap.gd"
+
+[display]
+
+window/size/viewport_width=1920
+window/size/viewport_height=1080
+window/size/mode=3
+window/size/resizable=false
+"#ForzarorientaciÃ³nhorizontalendispositivosdemanowindow/handheld/orientation"=0
+
+[input_devices]
+
+pointing/emulate_touch_from_mouse=true
+pointing/emulate_mouse_from_touch=false
+
+[internationalization]
+
+locale/test="es"
+
+[rendering]
+
+renderer/rendering_method="mobile"
+textures/vram_compression/import_etc2_astc=true
+anti_aliasing/quality/msaa_2d=2
+2d/snap/snap_2d_transforms_to_pixel=true
+2d/snap/snap_2d_vertices_to_pixel=true

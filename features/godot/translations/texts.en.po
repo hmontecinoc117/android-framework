@@ -1,0 +1,2 @@
+# English translation file (placeholder)
+# This file will be processed by Godot to create texts.en.translation

@@ -1,0 +1,27 @@
+# General
+.DS_Store
+Thumbs.db
+*.log
+
+# Local settings
+local.properties
+
+# Gradle build outputs
+.gradle/
+**/build/
+!gradle/wrapper/**
+
+# IDE files
+.idea/
+*.iml
+
+# Kotlin/Java outputs
+**/out/
+
+# Godot project caches
+**/.godot/
+**/.import/
+
+# Temporary files
+.tmp/
+.cache/

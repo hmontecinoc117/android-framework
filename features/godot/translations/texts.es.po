@@ -1,0 +1,2 @@
+# Archivo de traducción en español (placeholder)
+# Este archivo será procesado por Godot para crear texts.es.translation

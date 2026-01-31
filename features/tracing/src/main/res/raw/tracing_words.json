@@ -1,0 +1,14 @@
+{
+  "levels": [
+    {
+      "id": 1,
+      "name": "Animales básicos",
+      "words": ["perro", "gato", "pez", "pato"]
+    },
+    {
+      "id": 2,
+      "name": "Animales de granja",
+      "words": ["vaca", "cerdo", "oveja"]
+    }
+  ]
+}

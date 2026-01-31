@@ -1,0 +1,9 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.framework.features.tracing">
+
+    <application>
+        <activity android:name="com.framework.features.tracing.TracingMainActivity" android:screenOrientation="landscape" />
+    </application>
+
+</manifest>
+
