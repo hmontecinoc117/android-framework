@@ -1,0 +1,43 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://ui/components/StandardButton.tscn" id=1]
+
+[node name="MenuPrincipal" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Margin" type="MarginContainer" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+custom_constants/margin_left = 24
+custom_constants/margin_right = 24
+custom_constants/margin_top = 24
+custom_constants/margin_bottom = 24
+
+[node name="VBox" type="VBoxContainer" parent="Margin"]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_constants/separation = 16
+
+[node name="LogoPanel" type="Panel" parent="Margin/VBox"]
+size_flags_horizontal = 3
+size_flags_vertical = 1
+
+[node name="Logo" type="Label" parent="Margin/VBox/LogoPanel"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+text = "MEMORICE"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Buttons" type="VBoxContainer" parent="Margin/VBox"]
+custom_constants/separation = 12
+
+[node name="Jugar" parent="Margin/VBox/Buttons" instance=ExtResource( 1 )]
+text = "Jugar"
+
+[node name="Ajustes" parent="Margin/VBox/Buttons" instance=ExtResource( 1 )]
+text = "Ajustes"
+
+[node name="Salir" parent="Margin/VBox/Buttons" instance=ExtResource( 1 )]
+text = "Salir"

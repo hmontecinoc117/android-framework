@@ -11,3 +11,4 @@ Estas reglas aplican a todas las respuestas dentro de este proyecto.
 - Comandos: Entrega comandos en bloques con ```bash y líneas copiables.
 - Políticas: Cumple políticas de Microsoft y evita contenido dañino.
 - Modelo: Solo si el usuario pregunta por el modelo, indica "GPT-5".
+- GDScript: Al generar código `.gd` para Godot 4.5, sigue **siempre** la estructura y convenciones de `docs/GODOT_STYLE_GUIDE.md`. Orden obligatorio: documentación → @tool → class_name → extends → signals → enums → const → @export → vars → @onready → callbacks → funciones públicas → funciones privadas. Tipado estático obligatorio. Usar `const LOGP` para logging.

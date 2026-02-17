@@ -1,40 +1,68 @@
+## Variables globales de UI: paleta de colores, espaciado, radios,
+## escala de fuente y modo de contraste accesible.
+
 extends Node
-class_name UiGlobals
 
+# --- Señales ---
+signal settings_changed
+
+# --- Constantes ---
+const LOGP := "[UiGlobals] "
+
+# --- Variables Miembro ---
 var colors := {
-	"primary": Color(0.10, 0.57, 0.96),
-	"secondary": Color(0.95, 0.64, 0.10),
-	"background": Color(0.98, 0.99, 1.00),
-	"surface": Color(1.00, 1.00, 1.00),
-	"text": Color(0.12, 0.12, 0.12),
-	"text_on_primary": Color(1.00, 1.00, 1.00),
-	"success": Color(0.20, 0.70, 0.35),
-	"warning": Color(0.95, 0.75, 0.20),
-	"error": Color(0.90, 0.25, 0.32)
+	# Paleta compatible con ThemeBuilder y MemoryTile
+	"primary": Color("6d4aff"),
+	"primary_hover": Color("5a3de6"),
+	"primary_pressed": Color("4c35cc"),
+	"bg": Color("f8f6ff"),
+	"surface": Color("ffffff"),
+	"text": Color("3a2e5e"),
+	"text_muted": Color("7d73a6"),
+	"accent_yellow": Color("ffc83d"),
+	"accent_pink": Color("ff6dae"),
+	"success": Color("2ecc71"),
+	"danger": Color("ff4d4f"),
+	# Variación para tarjetas del memorice
+	"tile_hidden": Color("7c5cbf"),
+	"tile_hidden_border": Color("5a3da8"),
+	"tile_revealed": Color("fff3c4"),
+	"tile_match": Color("a8e6a3")
 }
 
-var radii := {
-	"sm": 8,
-	"md": 16,
-	"lg": 24
-}
+# Espaciado y radio siguiendo design_tokens.json
+var spacing := { "xs": 6, "sm": 10, "md": 14, "lg": 20, "xl": 28 }
+var radii := { "sm": 12, "md": 16, "lg": 24 }
+var elevation := { "none": 0, "sm": 2, "md": 4, "lg": 8 }
 
-var spacing := {
-	"xs": 8,
-	"sm": 12,
-	"md": 16,
-	"lg": 24,
-	"xl": 32
-}
+# Fuente del proyecto
+var font_path := "res://assets/fonts/NotoSans-Bold.ttf"
 
-var sizes := {
-	"touch_min": 64,
-	"button_height": 72,
-	"panel_padding": 20
-}
+# Accesibilidad y tamaños mínimos
+var touch_target_min := 180  # Aumentado para niños pequeños (esquinas grandes)
+var font_scale := 1.0
+var contrast_mode := "normal" # "normal" | "high"
 
-var motion := {
-	"duration_short": 0.12,
-	"duration_medium": 0.20,
-	"duration_long": 0.35
-}
+# ──────────────────────────────────────────────
+#  Funciones Públicas
+# ──────────────────────────────────────────────
+
+func set_font_scale(scale: float) -> void:
+	font_scale = clamp(scale, 0.8, 1.6)
+	settings_changed.emit()
+
+func set_contrast_mode(mode: String) -> void:
+	contrast_mode = mode
+	if contrast_mode == "high":
+		colors["text"] = Color("1e1638")
+		colors["primary"] = Color("5a3de6")
+		colors["primary_hover"] = Color("4f35d1")
+		colors["primary_pressed"] = Color("422cab")
+		colors["tile_hidden_border"] = Color("4a2d90")
+	else:
+		colors["text"] = Color("3a2e5e")
+		colors["primary"] = Color("6d4aff")
+		colors["primary_hover"] = Color("5a3de6")
+		colors["primary_pressed"] = Color("4c35cc")
+		colors["tile_hidden_border"] = Color("5a3da8")
+	settings_changed.emit()

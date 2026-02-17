@@ -25,8 +25,11 @@ interface IGodotCallback {
 
 /**
  * Clase para gestionar vistas de Godot en Android
+ * 
+ * IMPORTANTE: Esta clase está diseñada para ser usada como singleton o con lifecycle específico.
+ * No la instancies como objeto temporal para evitar memory leaks.
  */
-class GodotViewManager(val context: Context) {
+class GodotViewManager(private val context: Context) {
     private var godotView: View? = null
     private val callbacks = mutableListOf<IGodotCallback>()
 
@@ -36,16 +39,17 @@ class GodotViewManager(val context: Context) {
      */
     fun startGodotActivity(scenePath: String) {
         try {
-            // Lanzar la GodotActivity con la escena especificada
-            val intent = Intent(context, Class.forName("org.godotengine.godot.GodotActivity"))
-            intent.putExtra("--main-pack", scenePath)
+            // Lanzar la actividad integrada que gestiona el .pck (GodotGameActivity)
+            val intent = Intent(context, Class.forName("com.framework.GodotGameActivity"))
+            // Opcional: pasar la escena solicitada para que el juego la procese si corresponde
+            intent.putExtra("godot_startup_scene", scenePath)
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             context.startActivity(intent)
             
             Log.d("GodotViewManager", "Iniciando escena: $scenePath")
             notifySceneReady(scenePath)
         } catch (e: ClassNotFoundException) {
-            val error = "GodotActivity no encontrada. Verifica que godot-lib.aar esté en las dependencias."
+            val error = "GodotGameActivity no encontrada. Verifica que el módulo :app incluya godot-lib.aar y declare com.framework.GodotGameActivity en el Manifest."
             Log.e("GodotViewManager", error, e)
             notifyError(error)
         } catch (e: Exception) {
@@ -63,15 +67,30 @@ class GodotViewManager(val context: Context) {
         callbacks.remove(callback)
     }
 
-    fun notifySceneReady(sceneName: String) {
+    /**
+     * Limpia todos los callbacks registrados para prevenir memory leaks
+     */
+    fun clearCallbacks() {
+        callbacks.clear()
+    }
+
+    /**
+     * Libera recursos y limpia referencias
+     */
+    fun release() {
+        clearCallbacks()
+        godotView = null
+    }
+
+    private fun notifySceneReady(sceneName: String) {
         callbacks.forEach { it.onSceneReady(sceneName) }
     }
 
-    fun notifySceneEvent(eventName: String, data: Map<String, Any>) {
+    private fun notifySceneEvent(eventName: String, data: Map<String, Any>) {
         callbacks.forEach { it.onSceneEvent(eventName, data) }
     }
 
-    fun notifyError(error: String) {
+    private fun notifyError(error: String) {
         callbacks.forEach { it.onError(error) }
     }
 }

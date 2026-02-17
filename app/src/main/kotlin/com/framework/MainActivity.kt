@@ -74,9 +74,9 @@ fun MainScreen(onLaunchGame: () -> Unit) {
         }
     }
 
-    // Auto-inicio tras 10s
+    // Auto-inicio tras 3s
     LaunchedEffect(Unit) {
-        delay(10_000)
+        delay(3_000)
         onLaunchGame()
     }
 

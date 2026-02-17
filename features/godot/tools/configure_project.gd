@@ -1,3 +1,6 @@
+## Script de herramienta que configura los ajustes iniciales del proyecto
+## Godot (nombre, resolución, orientación) y guarda ProjectSettings.
+
 extends SceneTree
 
 func _initialize() -> void:

@@ -1,6 +1,6 @@
-[gd_scene load_steps=2 format=3 uid="uid://bs7qc3p8m4nej"]
+[gd_scene load_steps=2 format=3 uid="uid://c0ue50f3y3s5g"]
 
-[ext_resource type="Script" path="res://scripts/games/TraceGame.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/games/TraceGameSimple.gd" id="1_trace"]
 
 [node name="TraceGame" type="Control"]
 layout_mode = 3
@@ -9,7 +9,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-script = ExtResource("1")
+script = ExtResource("1_trace")
 
 [node name="Background" type="ColorRect" parent="."]
 layout_mode = 1
@@ -18,49 +18,4 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(1, 0.95, 0.85, 1)
-
-[node name="UI" type="Control" parent="."]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="InstructionLabel" type="Label" parent="UI"]
-layout_mode = 1
-anchors_preset = 10
-anchor_right = 1.0
-offset_top = 100.0
-offset_bottom = 300.0
-grow_horizontal = 2
-theme_override_font_sizes/font_size = 100
-text = "Dibuja en la pantalla"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="BackButton" type="Button" parent="UI"]
-layout_mode = 0
-offset_left = 50.0
-offset_top = 50.0
-offset_right = 350.0
-offset_bottom = 200.0
-theme_override_font_sizes/font_size = 80
-text = "← Salir"
-
-[node name="DrawingArea" type="Control" parent="."]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="Canvas" type="Control" parent="DrawingArea"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
+color = Color(1, 1, 1, 1)

@@ -1,7 +1,13 @@
-# ThemeManager.gd
-# Gestor de temas visuales y personalización
+## Gestor de temas visuales y personalización de colores.
+## Permite cambiar paletas de colores y aplicarlas
+## recursivamente a todos los nodos de la escena.
+
 extends Node
 
+# --- Señales ---
+signal theme_changed(theme: ThemeStyle)
+
+# --- Enums ---
 enum ThemeStyle {
 	DEFAULT,
 	SPACE,
@@ -10,6 +16,10 @@ enum ThemeStyle {
 	CANDY
 }
 
+# --- Constantes ---
+const LOGP := "[ThemeManager] "
+
+# --- Variables Miembro ---
 var current_theme: ThemeStyle = ThemeStyle.DEFAULT
 
 var theme_palettes: Dictionary = {
@@ -45,58 +55,40 @@ var theme_palettes: Dictionary = {
 	}
 }
 
-signal theme_changed(theme: ThemeStyle)
 
-func _ready():
+# ──────────────────────────────────────────────
+#  Callbacks del Engine
+# ──────────────────────────────────────────────
+
+func _ready() -> void:
 	pass
 
-func apply_theme(theme: ThemeStyle):
+
+# ──────────────────────────────────────────────
+#  Funciones Públicas
+# ──────────────────────────────────────────────
+
+func apply_theme(theme: ThemeStyle) -> void:
 	current_theme = theme
-	var palette = theme_palettes[theme]
-	
+	var palette: Dictionary = theme_palettes[theme]
+
 	# Aplicar a todos los nodos con el método "apply_theme_colors"
-	apply_theme_to_tree(get_tree().root, palette)
-	
+	_apply_theme_to_tree(get_tree().root, palette)
+
 	theme_changed.emit(theme)
-	print("Tema aplicado: ", ThemeStyle.keys()[theme])
+	print(LOGP, "Tema aplicado: ", ThemeStyle.keys()[theme])
 
-func apply_theme_to_tree(node: Node, palette: Dictionary):
-	# Verificar si el nodo tiene método personalizado de tema
-	if node.has_method("apply_theme_colors"):
-		node.apply_theme_colors(palette)
-	
-	# Aplicar a controles estándar
-	if node is Control:
-		apply_theme_to_control(node, palette)
-	
-	# Recursivo para hijos
-	for child in node.get_children():
-		apply_theme_to_tree(child, palette)
-
-func apply_theme_to_control(control: Control, palette: Dictionary):
-	# Aplicar colores según tipo de control
-	if control is Panel:
-		if control.has_theme_stylebox_override("panel"):
-			var stylebox = control.get_theme_stylebox("panel").duplicate()
-			if stylebox is StyleBoxFlat:
-				stylebox.bg_color = palette["background"]
-				control.add_theme_stylebox_override("panel", stylebox)
-	
-	elif control is Button:
-		if control.has_theme_stylebox_override("normal"):
-			var stylebox = control.get_theme_stylebox("normal").duplicate()
-			if stylebox is StyleBoxFlat:
-				stylebox.bg_color = palette["primary"]
-				control.add_theme_stylebox_override("normal", stylebox)
 
 func get_current_palette() -> Dictionary:
 	return theme_palettes[current_theme]
 
+
 func get_color(color_name: String) -> Color:
-	var palette = theme_palettes[current_theme]
+	var palette: Dictionary = theme_palettes[current_theme]
 	return palette.get(color_name, Color.WHITE)
 
-func set_theme_by_name(theme_name: String):
+
+func set_theme_by_name(theme_name: String) -> void:
 	match theme_name.to_lower():
 		"default":
 			apply_theme(ThemeStyle.DEFAULT)
@@ -109,4 +101,39 @@ func set_theme_by_name(theme_name: String):
 		"candy", "dulce":
 			apply_theme(ThemeStyle.CANDY)
 		_:
-			push_warning("Tema desconocido: " + theme_name)
+			push_warning(LOGP + "Tema desconocido: " + theme_name)
+
+
+# ──────────────────────────────────────────────
+#  Funciones Privadas
+# ──────────────────────────────────────────────
+
+func _apply_theme_to_tree(node: Node, palette: Dictionary) -> void:
+	## Aplica la paleta de colores recursivamente a todos los nodos.
+	if node.has_method("apply_theme_colors"):
+		node.apply_theme_colors(palette)
+
+	# Aplicar a controles estándar
+	if node is Control:
+		_apply_theme_to_control(node, palette)
+
+	# Recursivo para hijos
+	for child: Node in node.get_children():
+		_apply_theme_to_tree(child, palette)
+
+
+func _apply_theme_to_control(control: Control, palette: Dictionary) -> void:
+	## Aplica colores según tipo de control.
+	if control is Panel:
+		if control.has_theme_stylebox_override("panel"):
+			var stylebox: StyleBox = control.get_theme_stylebox("panel").duplicate()
+			if stylebox is StyleBoxFlat:
+				stylebox.bg_color = palette["background"]
+				control.add_theme_stylebox_override("panel", stylebox)
+
+	elif control is Button:
+		if control.has_theme_stylebox_override("normal"):
+			var stylebox: StyleBox = control.get_theme_stylebox("normal").duplicate()
+			if stylebox is StyleBoxFlat:
+				stylebox.bg_color = palette["primary"]
+				control.add_theme_stylebox_override("normal", stylebox)

@@ -1,0 +1,28 @@
+{
+  "colors": {
+    "primary": "#6D4AFF",
+    "primary_hover": "#5A3DE6",
+    "primary_pressed": "#4C35CC",
+    "bg": "#F8F6FF",
+    "surface": "#FFFFFF",
+    "text": "#3A2E5E",
+    "text_muted": "#7D73A6",
+    "accent_yellow": "#FFC83D",
+    "accent_pink": "#FF6DAE",
+    "success": "#2ECC71",
+    "danger": "#FF4D4F",
+    "tile_hidden": "#FFFFFF",
+    "tile_hidden_border": "#D7CFFC",
+    "tile_revealed": "#FFF3C4",
+    "tile_match": "#C8F7C5"
+  },
+  "spacing": { "xs": 6, "sm": 10, "md": 14, "lg": 20, "xl": 28 },
+  "radii": { "sm": 12, "md": 16, "lg": 24 },
+  "elevation": { "none": 0, "sm": 2, "md": 4, "lg": 8 },
+  "states": {
+    "touch_target_min": 56,
+    "font_scale_default": 1.0,
+    "contrast_mode": "normal",
+    "tile_states": ["hidden", "revealed", "matched"]
+  }
+}

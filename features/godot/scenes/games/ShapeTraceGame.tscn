@@ -1,8 +1,14 @@
 [gd_scene load_steps=2 format=3 uid="uid://csm4v7hq8yno1"]
 
-[ext_resource type="Script" path="res://scripts/games/ShapeTraceGame.gd" id="1_shape"]
+[ext_resource type="Script" path="res://scripts/games/ShapeTraceGameSimple.gd" id="1_shape"]
 
-[node name="ShapeTraceGame" type="Node2D"]
+[node name="ShapeTraceGame" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 script = ExtResource("1_shape")
 
 [node name="Background" type="ColorRect" parent="."]

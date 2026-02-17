@@ -1,10 +1,18 @@
-# PatternGame.gd
-# Juego de reconocimiento y completado de patrones/secuencias
+## PatternGame.gd
+## Juego de reconocimiento y completado de patrones/secuencias.
+
 extends Node2D
+
+# ──────────────────────────────────────────────
+#  Señales
+# ──────────────────────────────────────────────
 
 signal game_completed(stars: int, time: float)
 
-# Tipos de patrones
+# ──────────────────────────────────────────────
+#  Enums
+# ──────────────────────────────────────────────
+
 enum PatternType {
 	AB_PATTERN,      # A-B-A-B
 	ABC_PATTERN,     # A-B-C-A-B-C
@@ -14,17 +22,31 @@ enum PatternType {
 	SKIP_COUNTING    # 2-4-6-8
 }
 
+# ──────────────────────────────────────────────
+#  Constantes
+# ──────────────────────────────────────────────
+
+const LOGP := "[PatternGame] "
+
+# ──────────────────────────────────────────────
+#  Variables Exportadas
+# ──────────────────────────────────────────────
+
 @export var current_pattern_type: PatternType = PatternType.AB_PATTERN
 @export var difficulty_level: int = 1
 
-# Nodos
-var pattern_container
-var options_container
-var instruction_label
-var score_label
-var feedback_label
+# ──────────────────────────────────────────────
+#  Variables Miembro
+# ──────────────────────────────────────────────
 
-# Variables
+# --- Nodos ---
+var pattern_container: Node = null
+var options_container: Node = null
+var instruction_label: Label = null
+var score_label: Label = null
+var feedback_label: Label = null
+
+# --- Estado del juego ---
 var current_pattern: Array = []
 var gap_positions: Array[int] = []
 var correct_answers: Array = []
@@ -33,7 +55,7 @@ var correct_count: int = 0
 var max_questions: int = 8
 var start_time: float = 0.0
 
-# Elementos de patrón (emojis, formas, colores)
+# --- Datos ---
 var pattern_elements: Dictionary = {
 	"shapes": ["🔴", "🔵", "🟢", "🟡", "🟣", "🟠"],
 	"animals": ["🐶", "🐱", "🐭", "🐹", "🐰", "🦊"],
@@ -44,25 +66,52 @@ var pattern_elements: Dictionary = {
 
 var current_element_set: String = "shapes"
 
-func _ready():
-	# Obtener nodos
+# ──────────────────────────────────────────────
+#  Callbacks del Engine
+# ──────────────────────────────────────────────
+
+func _ready() -> void:
 	pattern_container = get_node_or_null("PatternArea/PatternContainer")
 	options_container = get_node_or_null("UI/OptionsContainer")
 	instruction_label = get_node_or_null("UI/TopBar/InstructionLabel")
 	score_label = get_node_or_null("UI/TopBar/ScoreLabel")
 	feedback_label = get_node_or_null("UI/FeedbackLabel")
 
-	apply_ui_assets()
-	
-	setup_game()
-	generate_question()
+	_apply_ui_assets()
+	_setup_game()
+	_generate_question()
 	start_time = Time.get_ticks_msec() / 1000.0
-		VoiceInstructions.play_instruction("pattern_game")
+	VoiceInstructions.play_instruction("pattern_game")
+	print(LOGP, "_ready completado")
 
-func apply_ui_assets():
+# ──────────────────────────────────────────────
+#  Funciones Públicas
+# ──────────────────────────────────────────────
+
+func change_element_set(new_set: String) -> void:
+	if pattern_elements.has(new_set):
+		current_element_set = new_set
+		reset_game()
+
+func change_pattern_type(new_type: PatternType) -> void:
+	current_pattern_type = new_type
+	reset_game()
+
+func reset_game() -> void:
+	questions_answered = 0
+	correct_count = 0
+	start_time = Time.get_ticks_msec() / 1000.0
+	_setup_game()
+	_generate_question()
+
+# ──────────────────────────────────────────────
+#  Funciones Privadas — Setup
+# ──────────────────────────────────────────────
+
+func _apply_ui_assets() -> void:
 	# Fondo
-	var bg_path = "res://assets/backgrounds/panel_grid_paper.png"
-	var background_node = get_node_or_null("Background")
+	var bg_path: String = "res://assets/backgrounds/panel_grid_paper.png"
+	var background_node: Node = get_node_or_null("Background")
 	if background_node and ResourceLoader.exists(bg_path):
 		var tex := load(bg_path)
 		var tex_rect := TextureRect.new()
@@ -73,285 +122,312 @@ func apply_ui_assets():
 		background_node.queue_free()
 
 	# Botón atrás
-	var back_button = get_node_or_null("UI/TopBar/BackButton")
+	var back_button: Button = get_node_or_null("UI/TopBar/BackButton")
 	if back_button:
-		var normal_tex_path = "res://assets/images/ui/button_grey.png"
-		var pressed_tex_path = "res://assets/images/ui/button_red_close.png"
-		if ResourceLoader.exists(normal_tex_path):
-			var sb_normal := StyleBoxTexture.new()
-			sb_normal.texture = load(normal_tex_path)
-			back_button.add_theme_stylebox_override("normal", sb_normal)
-			var sb_hover := sb_normal.duplicate()
-			back_button.add_theme_stylebox_override("hover", sb_hover)
-			if ResourceLoader.exists(pressed_tex_path):
-				var sb_pressed := StyleBoxTexture.new()
-				sb_pressed.texture = load(pressed_tex_path)
-				back_button.add_theme_stylebox_override("pressed", sb_pressed)
+		DesignSystem.apply_button_style(back_button, "error")
+		back_button.pressed.connect(_on_back_pressed)
 
-func setup_game():
-	update_score_label()
-	
+
+func _on_back_pressed() -> void:
+	AudioManager.play_back()
+	var bootstrap: Node = get_node_or_null("/root/UiBootstrap")
+	if bootstrap and bootstrap.has_method("fade_to_scene"):
+		bootstrap.fade_to_scene("res://scenes/main/GameSelector.tscn")
+	else:
+		get_tree().call_deferred("change_scene_to_file", "res://scenes/main/GameSelector.tscn")
+
+
+func _setup_game() -> void:
+	_update_score_label()
 	if instruction_label:
 		instruction_label.text = "Completa el patrón"
 
-func generate_question():
-	questions_answered += 1
-	
-	if questions_answered > max_questions:
-		complete_game()
-		return
-	
-	clear_containers()
-	
-	# Generar patrón según tipo
-	current_pattern = create_pattern(current_pattern_type)
-	
-	# Seleccionar posiciones para gaps
-	select_gap_positions()
-	
-	# Mostrar patrón con gaps
-	display_pattern_with_gaps()
-	
-	# Generar opciones de respuesta
-	generate_options()
+# ──────────────────────────────────────────────
+#  Funciones Privadas — Lógica de Preguntas
+# ──────────────────────────────────────────────
 
-func create_pattern(pattern_type: PatternType) -> Array:
+func _generate_question() -> void:
+	questions_answered += 1
+
+	if questions_answered > max_questions:
+		_complete_game()
+		return
+
+	_clear_containers()
+
+	# Generar patrón según tipo
+	current_pattern = _create_pattern(current_pattern_type)
+
+	# Seleccionar posiciones para gaps
+	_select_gap_positions()
+
+	# Mostrar patrón con gaps
+	_display_pattern_with_gaps()
+
+	# Generar opciones de respuesta
+	_generate_options()
+
+func _create_pattern(pattern_type: PatternType) -> Array:
 	var pattern: Array = []
-	var elements = pattern_elements[current_element_set]
-	var length = 6 + difficulty_level
-	
+	var elements: Array = pattern_elements[current_element_set]
+	var length: int = 6 + difficulty_level
+
 	match pattern_type:
 		PatternType.AB_PATTERN:
-			var a = elements[0]
-			var b = elements[1]
+			var a: String = elements[0]
+			var b: String = elements[1]
 			for i in length:
 				pattern.append(a if i % 2 == 0 else b)
-		
+
 		PatternType.ABC_PATTERN:
-			var a = elements[0]
-			var b = elements[1]
-			var c = elements[2]
+			var a: String = elements[0]
+			var b: String = elements[1]
+			var c: String = elements[2]
 			for i in length:
 				match i % 3:
 					0: pattern.append(a)
 					1: pattern.append(b)
 					2: pattern.append(c)
-		
+
 		PatternType.AABB_PATTERN:
-			var a = elements[0]
-			var b = elements[1]
+			var a: String = elements[0]
+			var b: String = elements[1]
 			for i in length:
 				pattern.append(a if (i / 2) % 2 == 0 else b)
-		
+
 		PatternType.GROWING:
 			if current_element_set == "numbers":
-				var start_num = randi_range(1, 3)
+				var start_num: int = randi_range(1, 3)
 				for i in length:
 					pattern.append(str(start_num + i))
 			else:
 				# Para no-números, usar patrón simple
 				for i in length:
 					pattern.append(elements[i % elements.size()])
-		
+
 		PatternType.DECREASING:
 			if current_element_set == "numbers":
-				var start_num = 10 - difficulty_level
+				var start_num: int = 10 - difficulty_level
 				for i in length:
-					var num = start_num - i
+					var num: int = start_num - i
 					if num > 0:
 						pattern.append(str(num))
 			else:
-				var reversed_elements = elements.duplicate()
+				var reversed_elements: Array = elements.duplicate()
 				reversed_elements.reverse()
 				for i in length:
 					pattern.append(reversed_elements[i % reversed_elements.size()])
-		
+
 		PatternType.SKIP_COUNTING:
 			if current_element_set == "numbers":
-				var skip = 2
+				var skip: int = 2
 				for i in length:
 					pattern.append(str((i + 1) * skip))
 			else:
 				# Patrón alternado para no-números
 				for i in length:
 					pattern.append(elements[(i * 2) % elements.size()])
-	
+
 	return pattern
 
-func select_gap_positions():
+func _select_gap_positions() -> void:
 	gap_positions.clear()
 	correct_answers.clear()
-	
-	var num_gaps = 1 + (difficulty_level / 2)  # 1-3 gaps según dificultad
+
+	var num_gaps: int = 1 + (difficulty_level / 2)  # 1-3 gaps según dificultad
 	num_gaps = mini(num_gaps, 3)
-	
+
 	# Evitar gaps en los extremos
-	var available_positions = range(1, current_pattern.size() - 1)
+	var available_positions: Array = range(1, current_pattern.size() - 1)
 	available_positions.shuffle()
-	
+
 	for i in num_gaps:
 		if i < available_positions.size():
-			var pos = available_positions[i]
+			var pos: int = available_positions[i]
 			gap_positions.append(pos)
 			correct_answers.append(current_pattern[pos])
-	
+
 	gap_positions.sort()
 
-func display_pattern_with_gaps():
+# ──────────────────────────────────────────────
+#  Funciones Privadas — UI / Display
+# ──────────────────────────────────────────────
+
+func _display_pattern_with_gaps() -> void:
 	if not pattern_container:
 		return
-	
+
 	for i in current_pattern.size():
-		var element_panel = Panel.new()
+		var element_panel := Panel.new()
 		element_panel.custom_minimum_size = Vector2(100, 100)
-		
-		var label = Label.new()
+
+		var label := Label.new()
+		DesignSystem.setup_label(label, DesignSystem.FONT_XLARGE, Color.WHITE)
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		label.add_theme_font_size_override("font_size", 64)
 		label.set_anchors_preset(Control.PRESET_FULL_RECT)
-		
+
 		if i in gap_positions:
 			# Gap (espacio vacío)
 			label.text = "?"
 			label.add_theme_color_override("font_color", Color.GRAY)
 			element_panel.set_meta("is_gap", true)
 			element_panel.set_meta("gap_index", gap_positions.find(i))
-			
+
 			# Estilo diferente para gaps
-			var stylebox = StyleBoxFlat.new()
+			var stylebox := StyleBoxFlat.new()
 			stylebox.bg_color = Color(0.9, 0.9, 0.9, 1)
 			stylebox.border_width_all = 3
-			stylebox.border_color = GameManager.COLOR_PRIMARY_YELLOW
+			stylebox.border_color = DesignSystem.get_color("primary")
 			element_panel.add_theme_stylebox_override("panel", stylebox)
 		else:
 			# Elemento normal
 			label.text = current_pattern[i]
 			element_panel.set_meta("is_gap", false)
-		
+
 		element_panel.add_child(label)
 		pattern_container.add_child(element_panel)
-		
+
 		# Animación de aparición
 		element_panel.scale = Vector2.ZERO
-		var tween = create_tween()
-		tween.tween_property(element_panel, "scale", Vector2.ONE, 0.3).set_delay(i * 0.1)
+		var tween: Tween = create_tween()
+		tween.tween_property(element_panel, "scale", Vector2.ONE, DesignSystem.ANIM_FAST).set_delay(i * 0.1).set_trans(Tween.TRANS_BACK)
 
-func generate_options():
+func _generate_options() -> void:
 	if not options_container:
 		return
-	
-	var options = correct_answers.duplicate()
-	
+
+	var options: Array = correct_answers.duplicate()
+
 	# Añadir opciones incorrectas
-	var elements = pattern_elements[current_element_set]
+	var elements: Array = pattern_elements[current_element_set]
 	while options.size() < 4:
-		var random_element = elements[randi() % elements.size()]
+		var random_element: String = elements[randi() % elements.size()]
 		if random_element not in options:
 			options.append(random_element)
-	
+
 	options.shuffle()
-	
+
 	# Crear botones de opciones
 	for option in options:
-		var button = Button.new()
+		var button := Button.new()
 		button.text = option
-		
-		button.custom_minimum_size = ScreenSizeAdapter.get_adaptive_button_size(Vector2(120, 120))
-		
-		button.add_theme_font_size_override("font_size", 64)
-		
+
+		button.custom_minimum_size = DesignSystem.BTN_LARGE
+		button.add_theme_font_size_override("font_size", DesignSystem.FONT_XLARGE)
+
 		if ResourceLoader.exists("res://scripts/components/AnimatedButton.gd"):
 			button.set_script(load("res://scripts/components/AnimatedButton.gd"))
-		
+
 		button.pressed.connect(_on_option_selected.bind(option))
 		options_container.add_child(button)
 
-func _on_option_selected(selected_option: String):
-	# Verificar si es correcto
-	var is_correct = selected_option in correct_answers
-	
-	if is_correct:
-		on_correct_answer(selected_option)
-	else:
-		on_wrong_answer()
+func _update_score_label() -> void:
+	if score_label:
+		score_label.text = "Pregunta: %d / %d" % [questions_answered - 1, max_questions]
 
-func on_correct_answer(answer: String):
+func _clear_containers() -> void:
+	if pattern_container:
+		for child in pattern_container.get_children():
+			child.queue_free()
+
+	if options_container:
+		for child in options_container.get_children():
+			child.queue_free()
+
+# ──────────────────────────────────────────────
+#  Funciones Privadas — Respuestas / Feedback
+# ──────────────────────────────────────────────
+
+func _on_option_selected(selected_option: String) -> void:
+	var is_correct: bool = selected_option in correct_answers
+
+	if is_correct:
+		_on_correct_answer(selected_option)
+	else:
+		_on_wrong_answer()
+
+func _on_correct_answer(answer: String) -> void:
 	correct_count += 1
-	
+
 	# Llenar el gap en el patrón
-	fill_gap_with_answer(answer)
-	
+	_fill_gap_with_answer(answer)
+
 	# Feedback visual
 	if feedback_label:
-		feedback_label.text = "¡Correcto! ✓"
-		feedback_label.add_theme_color_override("font_color", GameManager.COLOR_SUCCESS)
-	
+		feedback_label.text = "¡Correcto!"
+		feedback_label.add_theme_color_override("font_color", DesignSystem.get_color("success"))
+
 	# Efectos
 	AnimationHelper.create_confetti_at_position(self, get_viewport_rect().size / 2, 30)
 	AudioManager.play_success()
-	
+
 	# Verificar si completó todos los gaps
-	if all_gaps_filled():
-			VoiceInstructions.play_feedback(true, false)
-		update_score_label()
+	if _all_gaps_filled():
+		VoiceInstructions.play_feedback(true, false)
+		_update_score_label()
 		await get_tree().create_timer(1.5).timeout
-		generate_question()
+		_generate_question()
 	else:
 		await get_tree().create_timer(0.5).timeout
 		if feedback_label:
 			feedback_label.text = ""
 
-func fill_gap_with_answer(answer: String):
+func _on_wrong_answer() -> void:
+	# Feedback visual suave
+	if feedback_label:
+		feedback_label.text = "Intenta de nuevo"
+		feedback_label.add_theme_color_override("font_color", DesignSystem.get_color("error"))
+
+	AudioManager.play_error()
+
+	await get_tree().create_timer(1.0).timeout
+	if feedback_label:
+		feedback_label.text = ""
+
+func _fill_gap_with_answer(answer: String) -> void:
 	# Encontrar el primer gap sin llenar y actualizarlo
 	for child in pattern_container.get_children():
 		if child.get_meta("is_gap", false):
-			var label = child.get_child(0) as Label
+			var label: Label = child.get_child(0) as Label
 			if label and label.text == "?":
 				label.text = answer
-				label.add_theme_color_override("font_color", GameManager.COLOR_SUCCESS)
-				
+				label.add_theme_color_override("font_color", DesignSystem.get_color("success"))
+
 				# Animación de éxito
 				AnimationHelper.success_effect(child)
-				
+
 				# Cambiar estilo
-				var stylebox = StyleBoxFlat.new()
+				var stylebox := StyleBoxFlat.new()
 				stylebox.bg_color = Color(0.5, 1, 0.5, 0.3)
 				stylebox.border_width_all = 3
-				stylebox.border_color = GameManager.COLOR_SUCCESS
+				stylebox.border_color = DesignSystem.get_color("success")
 				child.add_theme_stylebox_override("panel", stylebox)
-				
+
 				child.set_meta("is_gap", false)
 				break
 
-func all_gaps_filled() -> bool:
+func _all_gaps_filled() -> bool:
 	for child in pattern_container.get_children():
 		if child.get_meta("is_gap", false):
 			return false
 	return true
 
-func on_wrong_answer():
-	# Feedback visual suave
-	if feedback_label:
-		feedback_label.text = "Intenta de nuevo"
-		feedback_label.add_theme_color_override("font_color", GameManager.COLOR_ERROR)
-	
-	AudioManager.play_error()
-	
-	await get_tree().create_timer(1.0).timeout
-	if feedback_label:
-		feedback_label.text = ""
+# ──────────────────────────────────────────────
+#  Funciones Privadas — Fin de Juego
+# ──────────────────────────────────────────────
 
-func complete_game():
-	var elapsed_time = (Time.get_ticks_msec() / 1000.0) - start_time
-	var accuracy = float(correct_count) / float(max_questions * gap_positions.size())
-	var stars = calculate_stars(accuracy)
-	
-	celebrate_completion()
+func _complete_game() -> void:
+	var elapsed_time: float = (Time.get_ticks_msec() / 1000.0) - start_time
+	var accuracy: float = float(correct_count) / float(max_questions * gap_positions.size())
+	var stars: int = _calculate_stars(accuracy)
+
+	_celebrate_completion()
 	GameManager.complete_game("PatternGame", stars, elapsed_time)
 	game_completed.emit(stars, elapsed_time)
+	print(LOGP, "Juego completado: estrellas=", stars, " tiempo=", elapsed_time)
 
-func calculate_stars(accuracy: float) -> int:
+func _calculate_stars(accuracy: float) -> int:
 	if accuracy >= 0.9:
 		return 3
 	elif accuracy >= 0.7:
@@ -359,39 +435,10 @@ func calculate_stars(accuracy: float) -> int:
 	else:
 		return 1
 
-func celebrate_completion():
+func _celebrate_completion() -> void:
 	AnimationHelper.create_confetti_at_position(self, get_viewport_rect().size / 2, 100)
 	AudioManager.play_game_complete()
 	VoiceInstructions.play_feedback(true)
-	
+
 	if OS.has_feature("mobile"):
 		Input.vibrate_handheld(300)
-
-func update_score_label():
-	if score_label:
-		score_label.text = "Pregunta: %d / %d" % [questions_answered - 1, max_questions]
-
-func clear_containers():
-	if pattern_container:
-		for child in pattern_container.get_children():
-			child.queue_free()
-	
-	if options_container:
-		for child in options_container.get_children():
-			child.queue_free()
-
-func change_element_set(new_set: String):
-	if pattern_elements.has(new_set):
-		current_element_set = new_set
-		reset_game()
-
-func change_pattern_type(new_type: PatternType):
-	current_pattern_type = new_type
-	reset_game()
-
-func reset_game():
-	questions_answered = 0
-	correct_count = 0
-	start_time = Time.get_ticks_msec() / 1000.0
-	setup_game()
-	generate_question()

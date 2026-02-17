@@ -7,29 +7,29 @@ object GodotScenes {
     /**
      * Menú principal con botones para los juegos
      */
-    const val MENU = "res://assets/scenes/menu.tscn"
+    const val MENU = "res://scenes/main/GameSelector.tscn"
     
     /**
      * Juego de trazado de palabras (usa assets/data/animals.json)
      */
-    const val TRACE_WORDS = "res://assets/scenes/trace_words.tscn"
+    const val TRACE_WORDS = "res://scenes/games/TraceGame.tscn"
     
     /**
      * Juego de trazado de figuras (auto, tren, avión, etc.)
      */
-    const val TRACE_SHAPES = "res://assets/scenes/trace_shapes.tscn"
+    const val TRACE_SHAPES = "res://scenes/games/ShapeTraceGame.tscn"
     
     /**
      * Juego de rompecabezas
      * Nota: Asigna source_image en el inspector de Godot
      */
-    const val PUZZLE = "res://assets/scenes/puzzle.tscn"
+    const val PUZZLE = "res://scenes/games/PuzzleGame.tscn"
     
     /**
      * Juego de memoria (memorice)
      * Nota: Asigna card_textures en el inspector de Godot
      */
-    const val MEMORY = "res://assets/scenes/memory.tscn"
+    const val MEMORY = "res://scenes/games/MemoryGame.tscn"
 }
 
 /**
@@ -42,8 +42,17 @@ object GodotLauncher {
      * @param scenePath Ruta de la escena (usar constantes de GodotScenes)
      */
     fun launch(context: android.content.Context, scenePath: String) {
-        val manager = GodotViewManager(context)
-        manager.startGodotActivity(scenePath)
+        try {
+            val intent = android.content.Intent(context, Class.forName("com.framework.GodotGameActivity"))
+            intent.putExtra("godot_startup_scene", scenePath)
+            intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(intent)
+            android.util.Log.d("GodotLauncher", "Iniciando escena: $scenePath")
+        } catch (e: ClassNotFoundException) {
+            android.util.Log.e("GodotLauncher", "GodotGameActivity no encontrada", e)
+        } catch (e: Exception) {
+            android.util.Log.e("GodotLauncher", "Error al iniciar Godot: ${e.message}", e)
+        }
     }
     
     /**

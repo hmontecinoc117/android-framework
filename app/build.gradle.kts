@@ -116,4 +116,8 @@ gradle.projectsEvaluated {
     tasks.matching { it.name == "assembleDebug" }.configureEach {
         finalizedBy(tasks.named("renameDebugApk"))
     }
+    // Asegurar que el .pck de Godot esté actualizado antes de cualquier build del app
+    tasks.matching { it.name == "preBuild" }.configureEach {
+        dependsOn(gradle.rootProject.tasks.named("exportGodotPack"))
+    }
 }

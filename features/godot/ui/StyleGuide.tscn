@@ -1,25 +1,47 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="PackedScene" path="res://ui/components/StandardButton.tscn" id=1]
+[ext_resource type="PackedScene" path="res://ui/components/MemoryTile.tscn" id=2]
 
 [node name="StyleGuide" type="Control"]
 anchor_right = 1.0
 anchor_bottom = 1.0
 
-[node name="Root" type="MarginContainer" parent="."]
+[node name="Margin" type="MarginContainer" parent="."]
 anchor_right = 1.0
 anchor_bottom = 1.0
-custom_minimum_size = Vector2(800, 480)
+custom_constants/margin_left = 20
+custom_constants/margin_right = 20
+custom_constants/margin_top = 20
+custom_constants/margin_bottom = 20
 
-[node name="VBox" type="VBoxContainer" parent="Root"]
-anchor_right = 1.0
-anchor_bottom = 1.0
+[node name="VBox" type="VBoxContainer" parent="Margin"]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_constants/separation = 14
 
-[node name="Title" type="Label" parent="Root/VBox"]
-text = "StyleGuide"
+[node name="Title" type="Label" parent="Margin/VBox"]
+text = "Style Guide (Infantil)"
+horizontal_alignment = 1
 
-[node name="Buttons" type="HBoxContainer" parent="Root/VBox"]
+[node name="Buttons" type="HBoxContainer" parent="Margin/VBox"]
+custom_constants/separation = 12
 
-[node name="Primary" parent="Root/VBox/Buttons" instance=ExtResource("1")]
-[node name="Primary2" parent="Root/VBox/Buttons" instance=ExtResource("1")]
-[node name="Primary3" parent="Root/VBox/Buttons" instance=ExtResource("1")]
+[node name="Jugar" parent="Margin/VBox/Buttons" instance=ExtResource( 1 )]
+text = "Jugar"
+
+[node name="Ajustes" parent="Margin/VBox/Buttons" instance=ExtResource( 1 )]
+text = "Ajustes"
+
+[node name="Salir" parent="Margin/VBox/Buttons" instance=ExtResource( 1 )]
+text = "Salir"
+
+[node name="GridPreview" type="GridContainer" parent="Margin/VBox"]
+columns = 4
+custom_constants/hseparation = 12
+custom_constants/vseparation = 12
+
+[node name="Tile1" parent="Margin/VBox/GridPreview" instance=ExtResource( 2 )]
+[node name="Tile2" parent="Margin/VBox/GridPreview" instance=ExtResource( 2 )]
+[node name="Tile3" parent="Margin/VBox/GridPreview" instance=ExtResource( 2 )]
+[node name="Tile4" parent="Margin/VBox/GridPreview" instance=ExtResource( 2 )]
