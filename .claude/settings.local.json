@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(flutter pub *)",
+      "Bash(ipconfig)",
+      "Bash(flutter run *)",
+      "Bash(flutter doctor *)",
+      "Bash(flutter devices *)",
+      "Bash(flutter build *)"
+    ]
+  }
+}

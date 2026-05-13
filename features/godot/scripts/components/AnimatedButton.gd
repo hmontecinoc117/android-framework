@@ -1,5 +1,5 @@
-## Botón con animaciones automáticas para interacciones táctiles.
-## Soporta hover, press, bounce, pulse y shake.
+## Botón con microanimaciones táctiles para niños de 3 años.
+## Soporta press, hover, error (shake) y pulse continuo.
 
 @tool
 extends Button
@@ -8,17 +8,19 @@ extends Button
 const LOGP := "[AnimatedButton] "
 
 # --- Variables Exportadas ---
-@export var hover_scale: float = 1.1
-@export var press_scale: float = 0.95
-@export var animation_duration: float = 0.2
-@export var enable_sound: bool = true
-@export var bounce_on_press: bool = true
+@export var hover_scale:       float = 1.06
+@export var press_scale:       float = 0.92
+@export var animation_duration: float = 0.18
+@export var enable_sound:      bool = true
+@export var bounce_on_press:   bool = true
 
 # --- Variables Miembro ---
-var original_scale: Vector2 = Vector2.ONE
-var is_pressed_down: bool = false
-var hover_tween: Tween
-var press_tween: Tween
+var original_scale: Vector2  = Vector2.ONE
+var is_pressed_down: bool    = false
+var _hover_tween:  Tween
+var _press_tween:  Tween
+var _pulse_tween:  Tween
+var _error_tween:  Tween
 
 
 # ──────────────────────────────────────────────
@@ -27,8 +29,6 @@ var press_tween: Tween
 
 func _ready() -> void:
 	original_scale = scale
-
-	# Conectar señales
 	mouse_entered.connect(_on_hover_start)
 	mouse_exited.connect(_on_hover_end)
 	button_down.connect(_on_press_start)
@@ -42,7 +42,7 @@ func _ready() -> void:
 
 func _on_hover_start() -> void:
 	if not is_pressed_down and not disabled:
-		_animate_scale(original_scale * hover_scale)
+		play_hover()
 
 func _on_hover_end() -> void:
 	if not is_pressed_down:
@@ -51,16 +51,13 @@ func _on_hover_end() -> void:
 func _on_press_start() -> void:
 	if disabled:
 		return
-
 	is_pressed_down = true
-	_animate_scale(original_scale * press_scale)
-
+	play_press()
 	if enable_sound and AudioManager:
 		AudioManager.play_button_press()
 
 func _on_press_end() -> void:
 	is_pressed_down = false
-
 	if _is_mouse_hovering():
 		_animate_scale(original_scale * hover_scale)
 	else:
@@ -72,68 +69,89 @@ func _on_button_pressed() -> void:
 
 
 # ──────────────────────────────────────────────
-#  Funciones Públicas
+#  API Pública — Microanimaciones
 # ──────────────────────────────────────────────
 
-## Animación de pulso continuo para llamar la atención.
-func pulse_animation(duration: float = 1.0, scale_factor: float = 1.2) -> void:
-	var pulse_tween: Tween = create_tween()
-	pulse_tween.set_loops()
-	pulse_tween.set_ease(Tween.EASE_IN_OUT)
-	pulse_tween.set_trans(Tween.TRANS_SINE)
-	pulse_tween.tween_property(self, "scale", original_scale * scale_factor, duration / 2)
-	pulse_tween.tween_property(self, "scale", original_scale, duration / 2)
+## Animación de pulsación al presionar: squish rápido con TRANS_BACK.
+func play_press() -> void:
+	_kill_tween(_hover_tween)
+	_hover_tween = create_tween()
+	_hover_tween.set_trans(Tween.TRANS_BACK)
+	_hover_tween.set_ease(Tween.EASE_OUT)
+	_hover_tween.tween_property(self, "scale", original_scale * press_scale, 0.08)
+	_hover_tween.tween_property(self, "scale", original_scale,               0.18)
 
-## Detener animación de pulso.
+
+## Animación de hover suave: ligero agrandamiento con TRANS_SINE.
+func play_hover() -> void:
+	_kill_tween(_hover_tween)
+	_hover_tween = create_tween()
+	_hover_tween.set_trans(Tween.TRANS_SINE)
+	_hover_tween.set_ease(Tween.EASE_OUT)
+	_hover_tween.tween_property(self, "scale", original_scale * hover_scale, 0.15)
+
+
+## Shake horizontal para indicar error o acción inválida.
+func play_error() -> void:
+	_kill_tween(_error_tween)
+	var origin_x: float = position.x
+	_error_tween = create_tween()
+	_error_tween.set_trans(Tween.TRANS_SINE)
+	for i: int in 3:
+		_error_tween.tween_property(self, "position:x", origin_x + 10.0, 0.05)
+		_error_tween.tween_property(self, "position:x", origin_x - 10.0, 0.05)
+	_error_tween.tween_property(self, "position:x", origin_x, 0.05)
+
+
+## Pulso continuo para llamar la atención.
+func pulse_animation(duration: float = 1.0, scale_factor: float = 1.2) -> void:
+	_kill_tween(_pulse_tween)
+	_pulse_tween = create_tween()
+	_pulse_tween.set_loops()
+	_pulse_tween.set_ease(Tween.EASE_IN_OUT)
+	_pulse_tween.set_trans(Tween.TRANS_SINE)
+	_pulse_tween.tween_property(self, "scale", original_scale * scale_factor, duration / 2.0)
+	_pulse_tween.tween_property(self, "scale", original_scale,                duration / 2.0)
+
+
+## Detener pulso y restaurar escala.
 func stop_pulse() -> void:
-	if hover_tween and hover_tween.is_running():
-		hover_tween.kill()
+	_kill_tween(_pulse_tween)
 	scale = original_scale
 
-## Animación de sacudida (para errores o llamar atención).
-func shake_animation(intensity: float = 10.0, duration: float = 0.5) -> void:
-	var original_position: Vector2 = position
-	var shake_tween: Tween = create_tween()
 
-	for i in range(int(duration * 20)):  # 20 sacudidas por segundo
-		var offset: Vector2 = Vector2(
-			randf_range(-intensity, intensity),
-			randf_range(-intensity, intensity)
-		)
-		shake_tween.tween_property(self, "position", original_position + offset, 0.05)
-
-	shake_tween.tween_property(self, "position", original_position, 0.1)
+## Animación de sacudida legada (compatibilidad).
+func shake_animation(intensity: float = 10.0, duration: float = 0.3) -> void:
+	play_error()
 
 
 # ──────────────────────────────────────────────
 #  Funciones Privadas
 # ──────────────────────────────────────────────
 
-## Anima la escala del botón hacia el valor objetivo.
-func _animate_scale(target_scale: Vector2) -> void:
-	# Cancelar tween anterior si existe
-	if hover_tween and hover_tween.is_running():
-		hover_tween.kill()
+func _animate_scale(target: Vector2) -> void:
+	_kill_tween(_hover_tween)
+	_hover_tween = create_tween()
+	_hover_tween.set_ease(Tween.EASE_OUT)
+	_hover_tween.set_trans(Tween.TRANS_BACK)
+	_hover_tween.tween_property(self, "scale", target, animation_duration)
 
-	hover_tween = create_tween()
-	hover_tween.set_ease(Tween.EASE_OUT)
-	hover_tween.set_trans(Tween.TRANS_BACK)
-	hover_tween.tween_property(self, "scale", target_scale, animation_duration)
 
-## Crea efecto de rebote al presionar.
 func _create_bounce_effect() -> void:
-	if press_tween and press_tween.is_running():
-		press_tween.kill()
+	_kill_tween(_press_tween)
+	_press_tween = create_tween()
+	_press_tween.set_ease(Tween.EASE_OUT)
+	_press_tween.set_trans(Tween.TRANS_BACK)
+	_press_tween.tween_property(self, "scale", original_scale * 1.12, 0.12)
+	_press_tween.tween_property(self, "scale", original_scale,        0.18)
 
-	press_tween = create_tween()
-	press_tween.set_ease(Tween.EASE_OUT)
-	press_tween.set_trans(Tween.TRANS_ELASTIC)
-	press_tween.tween_property(self, "scale", original_scale * 1.15, 0.1)
-	press_tween.tween_property(self, "scale", original_scale, 0.3)
 
-## Verifica si el mouse está sobre el botón.
+func _kill_tween(t: Tween) -> void:
+	if t and t.is_running():
+		t.kill()
+
+
 func _is_mouse_hovering() -> bool:
 	if not is_inside_tree():
 		return false
-	var mouse_pos: Vector2 = get_viewport().get_mouse_position()
-	return get_global_rect().has_point(mouse_pos)
+	return get_global_rect().has_point(get_viewport().get_mouse_position())
